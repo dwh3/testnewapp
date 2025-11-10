@@ -136,8 +136,93 @@
   <script>
     let selectedProfile = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
+    // ===== CRYPTO UTILITIES FOR PIN HASHING =====
+    /**
+     * Hash a PIN using PBKDF2 with Web Crypto API
+     * Security: 100k iterations, SHA-256, 16-byte salt
+     */
+    async function hashPin(pin, salt = null) {
+      if (!salt) {
+        salt = crypto.getRandomValues(new Uint8Array(16));
+      }
+
+      const encoder = new TextEncoder();
+      const pinBuffer = encoder.encode(pin);
+
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw', pinBuffer, 'PBKDF2', false, ['deriveBits']
+      );
+
+      const hashBuffer = await crypto.subtle.deriveBits(
+        {
+          name: 'PBKDF2',
+          salt: salt,
+          iterations: 100000, // OWASP recommended
+          hash: 'SHA-256'
+        },
+        keyMaterial,
+        256
+      );
+
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+
+      return { hash: hashHex, salt: saltHex };
+    }
+
+    /**
+     * Verify a PIN against stored hash
+     */
+    async function verifyPinHash(pin, storedHash, storedSalt) {
+      try {
+        const saltArray = new Uint8Array(
+          storedSalt.match(/.{2}/g).map(byte => parseInt(byte, 16))
+        );
+        const { hash } = await hashPin(pin, saltArray);
+        return hash === storedHash;
+      } catch (err) {
+        console.error('PIN verification error:', err);
+        return false;
+      }
+    }
+
+    /**
+     * Migrate existing profiles from plaintext PINs to hashed PINs
+     */
+    async function migrateProfilePins() {
+      const profiles = getProfiles();
+      let migrated = false;
+
+      for (const profile of profiles) {
+        // Check if profile has old plaintext PIN (no pinHash field)
+        if (profile.pin && !profile.pinHash) {
+          try {
+            const { hash, salt } = await hashPin(profile.pin);
+            profile.pinHash = hash;
+            profile.pinSalt = salt;
+            delete profile.pin; // Remove plaintext
+            migrated = true;
+          } catch (err) {
+            console.error('Migration failed for profile:', profile.name, err);
+          }
+        }
+      }
+
+      if (migrated) {
+        saveProfiles(profiles);
+        console.log('PIN migration completed for', profiles.length, 'profile(s)');
+      }
+    }
+
+    // ===== END CRYPTO UTILITIES =====
+
+    document.addEventListener('DOMContentLoaded', async () => {
       setupPinInputs();
+
+      // Migrate existing profiles on load
+      await migrateProfilePins();
+
       checkExistingProfiles();
 
       document.getElementById('createProfileForm').addEventListener('submit', createProfile);
@@ -205,7 +290,7 @@
       document.getElementById('userName').focus();
     }
 
-    function createProfile(e) {
+    async function createProfile(e) {
       e.preventDefault();
       const name = document.getElementById('userName').value.trim();
       const pin = (document.getElementById('pin1').value || '') +
@@ -220,24 +305,34 @@
         return showMessage('A profile with this name already exists', 'error');
       }
 
-      const newProfile = {
-        id: Date.now().toString(),
-        name,
-        pin,
-        createdAt: new Date().toISOString(),
-        data: {
-          calorieGoal: 2200,
-          proteinGoal: 160,
-          weightHistory: [],
-          dietLog: {},
-          setsLog: []
-        }
-      };
-      profiles.push(newProfile);
-      saveProfiles(profiles);
-      localStorage.setItem('fittrack_current_profile', newProfile.id);
-      showMessage('Profile created!', 'success');
-      setTimeout(() => window.location.href = 'index.html', 800);
+      try {
+        // Hash the PIN before storing
+        const { hash, salt } = await hashPin(pin);
+
+        const newProfile = {
+          id: Date.now().toString(),
+          name,
+          pinHash: hash,
+          pinSalt: salt,
+          // No plaintext 'pin' field - security improvement!
+          createdAt: new Date().toISOString(),
+          data: {
+            calorieGoal: 2200,
+            proteinGoal: 160,
+            weightHistory: [],
+            dietLog: {},
+            setsLog: []
+          }
+        };
+        profiles.push(newProfile);
+        saveProfiles(profiles);
+        localStorage.setItem('fittrack_current_profile', newProfile.id);
+        showMessage('Profile created!', 'success');
+        setTimeout(() => window.location.href = 'index.html', 800);
+      } catch (err) {
+        console.error('Profile creation error:', err);
+        showMessage('Failed to create profile. Please try again.', 'error');
+      }
     }
 
     function selectProfile(profileId) {
@@ -250,18 +345,62 @@
       document.getElementById('verify1').focus();
     }
 
-    function verifyPin(e) {
+    async function verifyPin(e) {
       e.preventDefault();
       const enteredPin = (document.getElementById('verify1').value || '') +
                          (document.getElementById('verify2').value || '') +
                          (document.getElementById('verify3').value || '') +
                          (document.getElementById('verify4').value || '');
-      if (enteredPin === (selectedProfile?.pin || '')) {
-        localStorage.setItem('fittrack_current_profile', selectedProfile.id);
-        showMessage('Success! Logging you in...', 'success');
-        setTimeout(() => window.location.href = 'index.html', 500);
-      } else {
-        showMessage('Incorrect PIN. Please try again.', 'error');
+
+      if (!selectedProfile) {
+        showMessage('No profile selected', 'error');
+        return;
+      }
+
+      try {
+        // Check if profile has hashed PIN (new format)
+        if (selectedProfile.pinHash && selectedProfile.pinSalt) {
+          const isValid = await verifyPinHash(enteredPin, selectedProfile.pinHash, selectedProfile.pinSalt);
+          if (isValid) {
+            localStorage.setItem('fittrack_current_profile', selectedProfile.id);
+            showMessage('Success! Logging you in...', 'success');
+            setTimeout(() => window.location.href = 'index.html', 500);
+          } else {
+            showMessage('Incorrect PIN. Please try again.', 'error');
+            ['verify1','verify2','verify3','verify4'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('verify1').focus();
+          }
+        }
+        // Fallback for old plaintext PINs (shouldn't happen after migration, but defensive)
+        else if (selectedProfile.pin) {
+          if (enteredPin === selectedProfile.pin) {
+            // Immediately hash it and update
+            const { hash, salt } = await hashPin(enteredPin);
+            selectedProfile.pinHash = hash;
+            selectedProfile.pinSalt = salt;
+            delete selectedProfile.pin;
+
+            const profiles = getProfiles();
+            const idx = profiles.findIndex(p => p.id === selectedProfile.id);
+            if (idx !== -1) {
+              profiles[idx] = selectedProfile;
+              saveProfiles(profiles);
+            }
+
+            localStorage.setItem('fittrack_current_profile', selectedProfile.id);
+            showMessage('Success! Logging you in...', 'success');
+            setTimeout(() => window.location.href = 'index.html', 500);
+          } else {
+            showMessage('Incorrect PIN. Please try again.', 'error');
+            ['verify1','verify2','verify3','verify4'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('verify1').focus();
+          }
+        } else {
+          showMessage('Profile corrupted. Please reset.', 'error');
+        }
+      } catch (err) {
+        console.error('PIN verification error:', err);
+        showMessage('Login failed. Please try again.', 'error');
         ['verify1','verify2','verify3','verify4'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('verify1').focus();
       }
