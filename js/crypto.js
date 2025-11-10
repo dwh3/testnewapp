@@ -27,6 +27,25 @@
 
 'use strict';
 
+// Get crypto reference (works in both browser and Node test environments)
+// Use a getter function to ensure we get crypto at runtime, not at module load time
+// Check globalThis first to support test environments
+const getCrypto = () => {
+  // In test environments, crypto is set on globalThis
+  if (typeof globalThis !== 'undefined' && globalThis.crypto) {
+    return globalThis.crypto;
+  }
+  // In browsers, crypto is a global
+  if (typeof window !== 'undefined' && window.crypto) {
+    return window.crypto;
+  }
+  // Fallback: try to access crypto directly (works in some environments)
+  if (typeof self !== 'undefined' && self.crypto) {
+    return self.crypto;
+  }
+  throw new Error('Web Crypto API not available');
+};
+
 /**
  * Hash a PIN using PBKDF2
  * @param {string} pin - The PIN to hash (typically 4 digits)
@@ -34,16 +53,18 @@
  * @returns {Promise<{hash: string, salt: string}>} Hex-encoded hash and salt
  */
 export async function hashPin(pin, salt = null) {
+  const cryptoAPI = getCrypto();
+
   // Generate salt if not provided (for new PINs)
   if (!salt) {
-    salt = crypto.getRandomValues(new Uint8Array(16));
+    salt = cryptoAPI.getRandomValues(new Uint8Array(16));
   }
 
   const encoder = new TextEncoder();
   const pinBuffer = encoder.encode(pin);
 
   // Import PIN as key material
-  const keyMaterial = await crypto.subtle.importKey(
+  const keyMaterial = await cryptoAPI.subtle.importKey(
     'raw',
     pinBuffer,
     'PBKDF2',
@@ -52,7 +73,7 @@ export async function hashPin(pin, salt = null) {
   );
 
   // Derive hash using PBKDF2
-  const hashBuffer = await crypto.subtle.deriveBits(
+  const hashBuffer = await cryptoAPI.subtle.deriveBits(
     {
       name: 'PBKDF2',
       salt: salt,
@@ -101,7 +122,8 @@ export async function verifyPin(pin, storedHash, storedSalt) {
  * @returns {Uint8Array} 16-byte random salt
  */
 export function generateSalt() {
-  return crypto.getRandomValues(new Uint8Array(16));
+  const cryptoAPI = getCrypto();
+  return cryptoAPI.getRandomValues(new Uint8Array(16));
 }
 
 /**
@@ -109,9 +131,14 @@ export function generateSalt() {
  * @returns {boolean} True if crypto.subtle is available
  */
 export function isCryptoAvailable() {
-  return typeof crypto !== 'undefined' &&
-         typeof crypto.subtle !== 'undefined' &&
-         typeof crypto.getRandomValues === 'function';
+  try {
+    const cryptoAPI = getCrypto();
+    return typeof cryptoAPI !== 'undefined' &&
+           typeof cryptoAPI.subtle !== 'undefined' &&
+           typeof cryptoAPI.getRandomValues === 'function';
+  } catch {
+    return false;
+  }
 }
 
 /**
