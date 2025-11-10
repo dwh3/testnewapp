@@ -1,0 +1,60 @@
+# Pull Request: PIN Security Fix
+
+## PR Creation Link
+https://github.com/dwh3/testnewapp/pull/new/claude/fix-critical-pin-security-011CUzp4Nmuz3d4KRgCkqiFU
+
+## Title
+SECURITY: Implement PBKDF2 PIN hashing with Web Crypto API
+
+## Description
+```markdown
+## Critical Security Fix
+
+Addresses critical security vulnerability from Phase 1 audit: plaintext PIN storage.
+
+### Changes
+- ✅ PBKDF2 hashing with SHA-256 (100k iterations)
+- ✅ 16-byte random salt per user
+- ✅ Automatic migration for existing users
+- ✅ Zero breaking changes to user experience
+
+### Files Modified
+- `js/crypto.js` (NEW) - Crypto utilities
+- `login.html` - PIN hashing integration
+- `SECURITY.md` (NEW) - Security documentation
+- `TESTING_PIN_SECURITY.md` (NEW) - Test checklist
+
+### Testing Completed
+- [x] New user PIN creation
+- [x] PIN verification
+- [x] Migration logic
+- [x] No plaintext in localStorage
+- [x] Error handling
+
+### Security Impact
+- **Before**: PINs stored as plaintext `"1234"`
+- **After**: PINs stored as PBKDF2 hash + salt
+- **User Impact**: None (transparent migration)
+
+### Documentation
+See `SECURITY.md` for implementation details and limitations.
+```
+
+## Labels
+- security
+- critical
+- phase-2
+
+## Reviewers
+@davidhummel
+
+## Branch Info
+- Source: `claude/fix-critical-pin-security-011CUzp4Nmuz3d4KRgCkqiFU`
+- Target: `main`
+- Commit: `4f4a1f1`
+
+## Files Changed (4 files, +960 lines)
+- js/crypto.js (+148 lines)
+- login.html (+87 insertions, -27 deletions)
+- SECURITY.md (+419 lines)
+- TESTING_PIN_SECURITY.md (+544 lines)
