@@ -3,19 +3,32 @@
  * Validates Phase 2.1 security implementation
  */
 
+// Set up crypto before importing the module
+import { webcrypto } from 'crypto';
+import { TextEncoder, TextDecoder } from 'util';
+
+// Ensure crypto is available globally before module import
+// Note: In Node.js, globalThis.crypto is a read-only getter, so we need Object.defineProperty
+const cryptoPolyfill = {
+  getRandomValues: webcrypto.getRandomValues.bind(webcrypto),
+  subtle: webcrypto.subtle,
+  randomUUID: webcrypto.randomUUID.bind(webcrypto)
+};
+
+Object.defineProperty(globalThis, 'crypto', {
+  value: cryptoPolyfill,
+  writable: true,
+  configurable: true
+});
+
+global.crypto = cryptoPolyfill;
+globalThis.TextEncoder = TextEncoder;
+globalThis.TextDecoder = TextDecoder;
+
+// Now import the crypto module
+const { hashPin, verifyPin, generateSalt, isCryptoAvailable, migratePlaintextPin } = await import('../../js/crypto.js');
+
 describe('PIN Crypto Utilities', () => {
-  let hashPin, verifyPin, generateSalt, isCryptoAvailable, migratePlaintextPin;
-
-  beforeAll(async () => {
-    // Dynamic import of ES6 module
-    const cryptoModule = await import('../../js/crypto.js');
-    hashPin = cryptoModule.hashPin;
-    verifyPin = cryptoModule.verifyPin;
-    generateSalt = cryptoModule.generateSalt;
-    isCryptoAvailable = cryptoModule.isCryptoAvailable;
-    migratePlaintextPin = cryptoModule.migratePlaintextPin;
-  });
-
   describe('isCryptoAvailable', () => {
     test('should return true in test environment', () => {
       expect(isCryptoAvailable()).toBe(true);
