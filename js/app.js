@@ -1,7 +1,8 @@
 // app.js
+// Storage utilities imported via index.html: saveJSON, loadJSON, safeSetItem, safeGetItem
 
 // Version management
-const APP_VERSION = '1.0.18'; // Increment this with each deployment
+const APP_VERSION = '1.0.19'; // localStorage error handling added
 
 // Check for updates
 async function checkForUpdates() {
@@ -62,26 +63,55 @@ document.addEventListener('DOMContentLoaded', () => {
 'use strict';
 
 // Redirect if no profile selected
-if (!localStorage.getItem('fittrack_current_profile')) {
+const currentProfileCheck = safeGetItem('fittrack_current_profile');
+if (!currentProfileCheck.value) {
   window.location.href = 'login.html';
 }
 
 /* ---------- Helpers: storage & profiles ---------- */
 function getCurrentProfile() {
-  const profileId = localStorage.getItem('fittrack_current_profile');
-  const profiles = JSON.parse(localStorage.getItem('fittrack_profiles') || '[]');
-  return profiles.find(p => p.id === profileId) || null;
+  const profileIdResult = safeGetItem('fittrack_current_profile');
+  const profilesResult = loadJSON('fittrack_profiles', []);
+
+  if (!profilesResult.success) {
+    console.error('Failed to load profiles:', profilesResult.error);
+    return null;
+  }
+
+  return profilesResult.data.find(p => p.id === profileIdResult.value) || null;
 }
 function saveCurrentProfile(profileData) {
-  const profiles = JSON.parse(localStorage.getItem('fittrack_profiles') || '[]');
+  const profilesResult = loadJSON('fittrack_profiles', []);
+
+  if (!profilesResult.success) {
+    if (typeof showToast === 'function') {
+      showToast('Failed to load profiles. Changes may not be saved.', 'error');
+    }
+    return;
+  }
+
+  const profiles = profilesResult.data;
   const index = profiles.findIndex(p => p.id === profileData.id);
+
   if (index > -1) {
     profiles[index] = profileData;
-    localStorage.setItem('fittrack_profiles', JSON.stringify(profiles));
+    const saveResult = saveJSON('fittrack_profiles', profiles);
+
+    if (!saveResult.success) {
+      if (typeof showToast === 'function') {
+        showToast(saveResult.error || 'Failed to save profile');
+      }
+
+      // Check storage health and warn user
+      const health = checkStorageHealth();
+      if (health.status === 'critical' && typeof showToast === 'function') {
+        showToast(`Storage ${health.percentage}% full. Please export your data.`);
+      }
+    }
   }
 }
 function logoutProfile() {
-  localStorage.removeItem('fittrack_current_profile');
+  safeRemoveItem('fittrack_current_profile');
   window.location.href = 'login.html';
 }
 
@@ -155,7 +185,8 @@ function seedDefaultTemplatesIfNeeded() {
   try {
     if (!currentProfile) return;
     const flagKey = `fittrack_seeded_templates_v1_${currentProfile.id}`;
-    if (localStorage.getItem(flagKey) === '1') return; // already seeded for this profile
+    const seededResult = safeGetItem(flagKey);
+    if (seededResult.value === '1') return; // already seeded for this profile
 
     const starters = getStarterTemplates();
     const existing = new Set((appState.templates || []).map(t => t.id));
@@ -172,7 +203,7 @@ function seedDefaultTemplatesIfNeeded() {
       persistState();
     }
     // mark seeded even if nothing added (prevents re-seed spam if user deleted them on purpose)
-    localStorage.setItem(flagKey, '1');
+    safeSetItem(flagKey, '1');
   } catch (e) {
     // fail-safe: never block app load
     console.warn('Template seeding skipped:', e);
@@ -1884,17 +1915,14 @@ const defaultFoods = [
 ];
 
 function seedFoodDBIfMissing() {
-  if (!localStorage.getItem(FOOD_DB_KEY)) {
-    localStorage.setItem(FOOD_DB_KEY, JSON.stringify(defaultFoods));
+  const existsResult = safeGetItem(FOOD_DB_KEY);
+  if (!existsResult.value) {
+    saveJSON(FOOD_DB_KEY, defaultFoods);
   }
 }
 function getFoodDB() {
-  try {
-    const raw = localStorage.getItem(FOOD_DB_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+  const result = loadJSON(FOOD_DB_KEY, []);
+  return result.success ? result.data : [];
 }
 function getFoodById(id) {
   const db = getFoodDB();
