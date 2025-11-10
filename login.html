@@ -133,6 +133,9 @@
     </div>
   </div>
 
+  <!-- Storage wrapper with error handling - MUST load first -->
+  <script src="js/storage.js"></script>
+
   <script>
     let selectedProfile = null;
 
@@ -230,11 +233,14 @@
     });
 
     function getProfiles() {
-      const profilesData = localStorage.getItem('fittrack_profiles');
-      return profilesData ? JSON.parse(profilesData) : [];
+      const result = loadJSON('fittrack_profiles', []);
+      return result.success ? result.data : [];
     }
     function saveProfiles(profiles) {
-      localStorage.setItem('fittrack_profiles', JSON.stringify(profiles));
+      const result = saveJSON('fittrack_profiles', profiles);
+      if (!result.success) {
+        showMessage(result.error || 'Failed to save profile data', 'error');
+      }
     }
     function showMessage(text, type) {
       const messageDiv = document.getElementById('message');
@@ -326,7 +332,7 @@
         };
         profiles.push(newProfile);
         saveProfiles(profiles);
-        localStorage.setItem('fittrack_current_profile', newProfile.id);
+        safeSetItem('fittrack_current_profile', newProfile.id);
         showMessage('Profile created!', 'success');
         setTimeout(() => window.location.href = 'index.html', 800);
       } catch (err) {
@@ -362,7 +368,7 @@
         if (selectedProfile.pinHash && selectedProfile.pinSalt) {
           const isValid = await verifyPinHash(enteredPin, selectedProfile.pinHash, selectedProfile.pinSalt);
           if (isValid) {
-            localStorage.setItem('fittrack_current_profile', selectedProfile.id);
+            safeSetItem('fittrack_current_profile', selectedProfile.id);
             showMessage('Success! Logging you in...', 'success');
             setTimeout(() => window.location.href = 'index.html', 500);
           } else {
@@ -387,7 +393,7 @@
               saveProfiles(profiles);
             }
 
-            localStorage.setItem('fittrack_current_profile', selectedProfile.id);
+            safeSetItem('fittrack_current_profile', selectedProfile.id);
             showMessage('Success! Logging you in...', 'success');
             setTimeout(() => window.location.href = 'index.html', 500);
           } else {
