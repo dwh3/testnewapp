@@ -4,6 +4,7 @@ module.exports = {
   collectCoverageFrom: [
     'js/**/*.js',
     '!js/**/*.test.js',
+    '!js/app.js',  // Exclude main app (tested separately)
     '!**/node_modules/**',
   ],
   coverageThreshold: {
