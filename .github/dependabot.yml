@@ -1,0 +1,83 @@
+# Dependabot configuration for automated dependency updates
+# See: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  # Monitor NPM dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "America/New_York"
+
+    # Security updates
+    open-pull-requests-limit: 10
+
+    # Automatically merge patch updates for dev dependencies
+    # (Requires GitHub Actions workflow for auto-merge)
+    labels:
+      - "dependencies"
+      - "javascript"
+
+    # Group non-security updates
+    groups:
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "patch"
+
+    # Assignees for review
+    # assignees:
+    #   - "maintainer-username"
+
+    # Commit message prefix
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+
+    # Version update strategy
+    versioning-strategy: increase
+
+    # Ignore specific dependencies
+    ignore:
+      # Ignore major version updates (review manually)
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+      # Example: Ignore specific packages
+      # - dependency-name: "jest"
+      #   versions: ["29.x"]
+
+    # Pull request settings
+    reviewers: []
+    milestone: null
+
+    # Rebase strategy
+    rebase-strategy: "auto"
+
+  # Monitor GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+
+    open-pull-requests-limit: 5
