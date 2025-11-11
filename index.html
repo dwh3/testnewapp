@@ -665,6 +665,46 @@
     </div>
   </div>
 
+  <!-- Edit Workout Set Modal -->
+  <div class="modal-overlay" id="editSetModal" style="display:none;" onclick="closeModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Edit Workout Set</h3>
+        <button class="btn-close" onclick="closeEditSetModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="editSetForm">
+          <input type="hidden" id="editSetId">
+
+          <div class="form-group">
+            <label>Exercise</label>
+            <input type="text" class="form-input" id="editExerciseName" readonly style="background:var(--gray-100);">
+          </div>
+
+          <div class="form-group">
+            <label>Weight (lbs)</label>
+            <input type="number" class="form-input" id="editWeight" min="0" step="0.5" required>
+          </div>
+
+          <div class="form-group">
+            <label>Reps</label>
+            <input type="number" class="form-input" id="editReps" min="1" max="100" required>
+          </div>
+
+          <div class="form-group">
+            <label>RIR (Reps in Reserve - optional)</label>
+            <input type="number" class="form-input" id="editRir" min="0" max="10" placeholder="Leave blank if not tracked">
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:20px;">
+            <button type="submit" class="btn-primary-full">Save Changes</button>
+            <button type="button" onclick="closeEditSetModal()" class="btn-secondary-full">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 

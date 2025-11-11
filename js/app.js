@@ -451,6 +451,10 @@ function setupEventListeners() {
   const mealFoodSearch = document.getElementById('mealFoodSearch');
   if (mealFoodSearch) mealFoodSearch.addEventListener('input', function () { renderMealFoodResults(this.value.toLowerCase()); });
 
+  // Edit workout set form
+  const editSetForm = document.getElementById('editSetForm');
+  if (editSetForm) editSetForm.addEventListener('submit', handleEditSetSubmit);
+
   // Save meal buttons
   const saveMealBtn = document.getElementById('saveMealBtn');
   if (saveMealBtn) saveMealBtn.addEventListener('click', saveMealOnly);
@@ -476,6 +480,9 @@ function setupEventListeners() {
       // NEW: close completion prompt
       const wcm = document.getElementById('workoutCompleteModal');
       if (wcm && wcm.classList.contains('show')) closeWorkoutCompleteModal();
+      // NEW: close edit set modal
+      const esm = document.getElementById('editSetModal');
+      if (esm && esm.classList.contains('show')) closeEditSetModal();
     }
     if (e.key === 'Enter' && document.getElementById('activeWorkoutModal')?.classList.contains('show')) {
       logActiveSet();
@@ -2891,12 +2898,85 @@ function showToast(msg) {
 function editWorkoutSet(setId) {
   console.log('Edit workout set:', setId);
   const set = appState.setsLog.find(s => s.id === setId);
+
   if (!set) {
     showToast('Set not found');
     return;
   }
+
   console.log('Found set to edit:', set);
-  alert(`Edit functionality coming in next step.\n\nSet: ${set.exerciseName}\nWeight: ${set.weight} lbs\nReps: ${set.reps}\nID: ${setId}`);
+
+  // Populate modal form fields
+  document.getElementById('editSetId').value = setId;
+  document.getElementById('editExerciseName').value = set.exerciseName;
+  document.getElementById('editWeight').value = set.weight;
+  document.getElementById('editReps').value = set.reps;
+  document.getElementById('editRir').value = set.rir || '';
+
+  // Show modal
+  const modal = document.getElementById('editSetModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+  }
+}
+
+/**
+ * Close the edit set modal
+ */
+function closeEditSetModal() {
+  const modal = document.getElementById('editSetModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+  }
+
+  // Reset form
+  const form = document.getElementById('editSetForm');
+  if (form) {
+    form.reset();
+  }
+}
+
+/**
+ * Handle edit set form submission
+ */
+function handleEditSetSubmit(e) {
+  e.preventDefault();
+
+  const setId = document.getElementById('editSetId').value;
+  const updatedData = {
+    weight: parseFloat(document.getElementById('editWeight').value),
+    reps: parseInt(document.getElementById('editReps').value, 10),
+    rir: parseInt(document.getElementById('editRir').value, 10) || null
+  };
+
+  console.log('Saving edited set:', setId, updatedData);
+
+  // Find and update the set
+  const index = appState.setsLog.findIndex(s => s.id === setId);
+  if (index !== -1) {
+    // Merge updated data with existing set
+    appState.setsLog[index] = {
+      ...appState.setsLog[index],
+      ...updatedData
+    };
+
+    console.log('Updated set:', appState.setsLog[index]);
+
+    // Save to localStorage
+    persistState();
+
+    // Close modal and refresh display
+    closeEditSetModal();
+    updateHome();
+    updateExerciseProgress();
+    updateSetsChart();
+
+    showToast('Workout set updated!');
+  } else {
+    showToast('Error: Set not found');
+  }
 }
 
 /**
@@ -2998,4 +3078,5 @@ window.handleAddMoreFromComplete = handleAddMoreFromComplete;
 
 // Edit/Delete workout sets
 window.editWorkoutSet = editWorkoutSet;
+window.closeEditSetModal = closeEditSetModal;
 window.deleteWorkoutSet = deleteWorkoutSet;
