@@ -3208,23 +3208,46 @@ function handleEditMealSubmit(e) {
  * @param {string} entryId - Unique ID of the entry to delete
  */
 function deleteMealEntry(date, entryId) {
-  console.log('Delete meal entry:', date, entryId);
-
-  // Find the entry
-  const day = appState.dietLog[date];
-  if (!day) {
-    showToast('Date not found');
+  const dayData = appState.dietLog[date];
+  if (!dayData) {
+    alert('Date not found');
     return;
   }
 
-  const entry = day.entries.find(e => e.entryId === entryId);
+  const entry = dayData.entries.find(e => e.entryId === entryId);
   if (!entry) {
-    showToast('Entry not found');
+    alert('Entry not found');
     return;
   }
 
-  console.log('Found entry to delete:', entry);
-  alert(`Meal/food delete functionality coming in step 7.\n\nType: ${entry.type}\nName: ${entry.name}\nCalories: ${entry.calories}\nDate: ${date}\nID: ${entryId}`);
+  // Confirmation
+  const message = `Delete this meal entry?\n\n${entry.name}\n${entry.calories} calories\n\nThis cannot be undone.`;
+
+  if (!confirm(message)) {
+    return;
+  }
+
+  // Remove entry
+  const index = dayData.entries.findIndex(e => e.entryId === entryId);
+  if (index !== -1) {
+    dayData.entries.splice(index, 1);
+
+    // Recalculate totals
+    recalculateDayTotals(date);
+
+    // If no entries left, delete the day
+    if (dayData.entries.length === 0) {
+      delete appState.dietLog[date];
+    }
+
+    // Save
+    persistState();
+
+    // Refresh
+    location.reload();
+
+    alert('Meal entry deleted successfully!');
+  }
 }
 
 /* ---------- Window bindings ---------- */
