@@ -9,8 +9,8 @@ const productionConfig = {
     enableDataExport: true,         // Phase 2.2 complete
     enableDataImport: false,        // Not ready
     enableCustomExercises: false,   // Not ready
-    enableEditEntries: false,       // Not ready
-    enableDeleteEntries: false,     // Not ready
+    enableEditEntries: true,        // Phase 3.1 complete
+    enableDeleteEntries: true,      // Phase 3.1 complete
     enableSocialSharing: false,
     enableOfflineMode: true,
     enablePerExerciseHistory: false // Not ready

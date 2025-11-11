@@ -451,6 +451,14 @@ function setupEventListeners() {
   const mealFoodSearch = document.getElementById('mealFoodSearch');
   if (mealFoodSearch) mealFoodSearch.addEventListener('input', function () { renderMealFoodResults(this.value.toLowerCase()); });
 
+  // Edit workout set form
+  const editSetForm = document.getElementById('editSetForm');
+  if (editSetForm) editSetForm.addEventListener('submit', handleEditSetSubmit);
+
+  // Edit meal entry form
+  const editMealForm = document.getElementById('editMealForm');
+  if (editMealForm) editMealForm.addEventListener('submit', handleEditMealSubmit);
+
   // Save meal buttons
   const saveMealBtn = document.getElementById('saveMealBtn');
   if (saveMealBtn) saveMealBtn.addEventListener('click', saveMealOnly);
@@ -476,6 +484,9 @@ function setupEventListeners() {
       // NEW: close completion prompt
       const wcm = document.getElementById('workoutCompleteModal');
       if (wcm && wcm.classList.contains('show')) closeWorkoutCompleteModal();
+      // NEW: close edit set modal
+      const esm = document.getElementById('editSetModal');
+      if (esm && esm.classList.contains('show')) closeEditSetModal();
     }
     if (e.key === 'Enter' && document.getElementById('activeWorkoutModal')?.classList.contains('show')) {
       logActiveSet();
@@ -574,6 +585,16 @@ function updateHome() {
             <div class="activity-name">${s.exerciseName} • ${s.weight} × ${s.reps}</div>
             <div class="activity-time">${formatDate(s.date)} • ${prettyGroup(s.muscleGroup)}</div>
           </div>
+          ${s.id ? `
+          <div class="activity-actions">
+            <button onclick="editWorkoutSet('${s.id}')" class="btn-icon-sm" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button onclick="deleteWorkoutSet('${s.id}')" class="btn-icon-sm btn-danger" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+          ` : ''}
         </div>`).join('');
     }
   }
@@ -1446,7 +1467,8 @@ function finishActiveWorkout() {
   // Log all sets to setsLog
   aw.items.forEach(it => {
     it.setsCompleted.forEach(st => {
-      appState.setsLog.push({
+      const newSet = {
+        id: 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), // Unique ID for edit/delete
         date: st.ts || new Date().toISOString(),
         exerciseId: it.exerciseId,
         exerciseName: it.name,
@@ -1454,7 +1476,9 @@ function finishActiveWorkout() {
         weight: st.weight,
         reps: st.reps,
         rir: st.rir
-      });
+      };
+      appState.setsLog.push(newSet);
+      console.log('Created workout set with ID:', newSet.id);
     });
   });
 
@@ -2073,9 +2097,10 @@ function addSelectedFoodToLog(calc) {
   ensureDietDay(date);
 
   const entry = {
+    entryId: 'entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), // Unique ID for edit/delete
     type: 'food',
     source: 'food_db',
-    id: selectedFood.id,
+    foodId: selectedFood.id, // Renamed from 'id' to avoid confusion with entryId
     name: selectedFood.name,
     meal,
     qty: calc.qty,
@@ -2090,6 +2115,7 @@ function addSelectedFoodToLog(calc) {
 
   appState.dietLog[date].entries.push(entry);
   addTotals(appState.dietLog[date].totals, entry);
+  console.log('Created food entry with ID:', entry.entryId);
 
   persistState();
   updateHome();
@@ -2388,7 +2414,8 @@ function quickAddFood(foodId, withPortion = false) {
   const servings = food.refGrams > 0 ? grams / food.refGrams : 0;
 
   const entry = {
-    type:'food', source:'food_db', id:food.id, name:food.name, meal,
+    entryId: 'entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), // Unique ID for edit/delete
+    type:'food', source:'food_db', foodId:food.id, name:food.name, meal,
     qty, unit: unitKey, grams,
     calories: Math.round((food.perRef.calories || 0) * servings),
     protein: Math.round((food.perRef.protein || 0) * servings),
@@ -2400,6 +2427,7 @@ function quickAddFood(foodId, withPortion = false) {
   ensureDietDay(date);
   appState.dietLog[date].entries.push(entry);
   addTotals(appState.dietLog[date].totals, entry);
+  console.log('Created quick-add food entry with ID:', entry.entryId);
   persistState();
   updateHome();
   updateDietPanels();
@@ -2421,6 +2449,7 @@ function quickAddMeal(mealId, withServings = false) {
   const totals = scaleTotals(meal.perServingTotals, servings);
 
   const entry = {
+    entryId: 'entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), // Unique ID for edit/delete
     type:'meal', mealId: meal.id, name: meal.name, meal: mealTag, servings,
     calories: totals.calories, protein: totals.protein, carbs: totals.carbs, fat: totals.fat,
     components: meal.items.map(it => {
@@ -2442,6 +2471,7 @@ function quickAddMeal(mealId, withServings = false) {
   ensureDietDay(date);
   appState.dietLog[date].entries.push(entry);
   addTotals(appState.dietLog[date].totals, entry);
+  console.log('Created quick-add meal entry with ID:', entry.entryId);
   persistState();
   updateHome();
   updateDietPanels();
@@ -2616,6 +2646,7 @@ function saveMeal(addAfter) {
     const mealTag = document.getElementById('mealBuilderMeal')?.value || 'Snack';
     const totals = scaleTotals(meal.perServingTotals, 1);
     const entry = {
+      entryId: 'entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), // Unique ID for edit/delete
       type:'meal', mealId: meal.id, name: meal.name, meal: mealTag, servings: 1,
       calories: totals.calories, protein: totals.protein, carbs: totals.carbs, fat: totals.fat,
       components: meal.items.map(it => {
@@ -2633,6 +2664,7 @@ function saveMeal(addAfter) {
     ensureDietDay(date);
     appState.dietLog[date].entries.push(entry);
     addTotals(appState.dietLog[date].totals, entry);
+    console.log('Created meal builder entry with ID:', entry.entryId);
     persistState();
     updateHome();
     updateDietPanels();
@@ -2666,6 +2698,16 @@ function updateDietPanels() {
                 <div class="activity-name">${it.name} • ${it.calories} kcal</div>
                 <div class="activity-time">${it.meal || '—'} • ${it.servings} serving${it.servings>1?'s':''} • ${it.protein||0}g P • ${it.carbs||0}g C • ${it.fat||0}g F</div>
               </div>
+              ${it.entryId ? `
+              <div class="activity-actions">
+                <button onclick="editMealEntry('${t}', '${it.entryId}')" class="btn-icon-sm" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button onclick="deleteMealEntry('${t}', '${it.entryId}')" class="btn-icon-sm btn-danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+              ` : ''}
             </div>`;
         }
         // food
@@ -2676,6 +2718,16 @@ function updateDietPanels() {
               <div class="activity-name">${it.name || `Entry ${idx+1}`} • ${it.calories} kcal</div>
               <div class="activity-time">${it.meal || '—'} • ${(it.protein || 0)}g P • ${(it.carbs || 0)}g C • ${(it.fat || 0)}g F</div>
             </div>
+            ${it.entryId ? `
+            <div class="activity-actions">
+              <button onclick="editMealEntry('${t}', '${it.entryId}')" class="btn-icon-sm" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button onclick="deleteMealEntry('${t}', '${it.entryId}')" class="btn-icon-sm btn-danger" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+            ` : ''}
           </div>`;
       }).join('');
     }
@@ -2862,6 +2914,342 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+/* ---------- Edit/Delete Workout Sets ---------- */
+/**
+ * Edit a workout set entry
+ * @param {string} setId - Unique ID of the set to edit
+ */
+function editWorkoutSet(setId) {
+  console.log('Edit workout set:', setId);
+  const set = appState.setsLog.find(s => s.id === setId);
+
+  if (!set) {
+    showToast('Set not found');
+    return;
+  }
+
+  console.log('Found set to edit:', set);
+
+  // Populate modal form fields
+  document.getElementById('editSetId').value = setId;
+  document.getElementById('editExerciseName').value = set.exerciseName;
+  document.getElementById('editWeight').value = set.weight;
+  document.getElementById('editReps').value = set.reps;
+  document.getElementById('editRir').value = set.rir || '';
+
+  // Show modal
+  const modal = document.getElementById('editSetModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+  }
+}
+
+/**
+ * Close the edit set modal
+ */
+function closeEditSetModal() {
+  const modal = document.getElementById('editSetModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+  }
+
+  // Reset form
+  const form = document.getElementById('editSetForm');
+  if (form) {
+    form.reset();
+  }
+}
+
+/**
+ * Handle edit set form submission
+ */
+function handleEditSetSubmit(e) {
+  e.preventDefault();
+
+  const setId = document.getElementById('editSetId').value;
+  const updatedData = {
+    weight: parseFloat(document.getElementById('editWeight').value),
+    reps: parseInt(document.getElementById('editReps').value, 10),
+    rir: parseInt(document.getElementById('editRir').value, 10) || null
+  };
+
+  console.log('Saving edited set:', setId, updatedData);
+
+  // Find and update the set
+  const index = appState.setsLog.findIndex(s => s.id === setId);
+  if (index !== -1) {
+    // Merge updated data with existing set
+    appState.setsLog[index] = {
+      ...appState.setsLog[index],
+      ...updatedData
+    };
+
+    console.log('Updated set:', appState.setsLog[index]);
+
+    // Save to localStorage
+    persistState();
+
+    // Close modal and refresh display
+    closeEditSetModal();
+    updateHome();
+    updateExerciseProgress();
+    updateSetsChart();
+
+    showToast('Workout set updated!');
+  } else {
+    showToast('Error: Set not found');
+  }
+}
+
+/**
+ * Delete a workout set entry
+ * @param {string} setId - Unique ID of the set to delete
+ */
+function deleteWorkoutSet(setId) {
+  console.log('Delete workout set:', setId);
+
+  // Find the set to show details in confirmation
+  const set = appState.setsLog.find(s => s.id === setId);
+
+  if (!set) {
+    showToast('Set not found');
+    return;
+  }
+
+  console.log('Found set to delete:', set);
+
+  // Confirmation dialog with details
+  const message = `Delete this workout set?\n\n${set.exerciseName}\n${set.weight} lbs × ${set.reps} reps${set.rir !== null && set.rir !== undefined ? `\nRIR: ${set.rir}` : ''}\n${formatDate(set.date)}\n\nThis cannot be undone.`;
+
+  if (!confirm(message)) {
+    console.log('Delete cancelled by user');
+    return; // User cancelled
+  }
+
+  // Remove from array
+  const index = appState.setsLog.findIndex(s => s.id === setId);
+  if (index !== -1) {
+    const deletedSet = appState.setsLog.splice(index, 1)[0];
+    console.log('Deleted set:', deletedSet);
+
+    // Save to localStorage
+    persistState();
+
+    // Refresh display
+    updateHome();
+    updateExerciseProgress();
+    updateSetsChart();
+
+    // Success message
+    showToast('Workout set deleted!');
+  } else {
+    showToast('Error: Set not found');
+  }
+}
+
+/* ---------- Edit/Delete Meal/Food Entries ---------- */
+/**
+ * Edit a meal or food entry
+ * @param {string} date - Date key (YYYY-MM-DD)
+ * @param {string} entryId - Unique ID of the entry to edit
+ */
+function editMealEntry(date, entryId) {
+  console.log('Edit meal entry:', date, entryId);
+
+  // Find the entry
+  const day = appState.dietLog[date];
+  if (!day) {
+    showToast('Date not found');
+    return;
+  }
+
+  const entry = day.entries.find(e => e.entryId === entryId);
+  if (!entry) {
+    showToast('Entry not found');
+    return;
+  }
+
+  console.log('Found entry to edit:', entry);
+
+  // Populate form fields
+  document.getElementById('editMealDate').value = date;
+  document.getElementById('editMealEntryId').value = entryId;
+  document.getElementById('editMealName').value = entry.name || '';
+  document.getElementById('editMealQty').value = entry.quantity || entry.servings || 1;
+  document.getElementById('editMealUnit').value = entry.unit || 'serving(s)';
+  document.getElementById('editMealTime').value = entry.meal || '';
+
+  // Show modal
+  const modal = document.getElementById('editMealModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+  }
+}
+
+/**
+ * Close the meal edit modal
+ */
+function closeEditMealModal() {
+  const modal = document.getElementById('editMealModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+  }
+
+  // Reset form
+  const form = document.getElementById('editMealForm');
+  if (form) form.reset();
+}
+
+/**
+ * Recalculate totals for a specific day based on all entries
+ * @param {string} date - Date key (YYYY-MM-DD)
+ */
+function recalculateDayTotals(date) {
+  const day = appState.dietLog[date];
+  if (!day) return;
+
+  // Reset totals
+  day.totals = {
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    fiber: 0
+  };
+
+  // Sum all entries
+  day.entries.forEach(entry => {
+    day.totals.calories += entry.calories || 0;
+    day.totals.protein += entry.protein || 0;
+    day.totals.carbs += entry.carbs || 0;
+    day.totals.fat += entry.fat || 0;
+    day.totals.fiber += entry.fiber || 0;
+  });
+
+  // Round to one decimal place
+  day.totals.protein = Math.round(day.totals.protein * 10) / 10;
+  day.totals.carbs = Math.round(day.totals.carbs * 10) / 10;
+  day.totals.fat = Math.round(day.totals.fat * 10) / 10;
+  day.totals.fiber = Math.round(day.totals.fiber * 10) / 10;
+
+  console.log('Recalculated day totals for', date, ':', day.totals);
+}
+
+/**
+ * Handle meal edit form submission
+ * @param {Event} e - Form submit event
+ */
+function handleEditMealSubmit(e) {
+  e.preventDefault();
+
+  const date = document.getElementById('editMealDate').value;
+  const entryId = document.getElementById('editMealEntryId').value;
+  const newQty = parseFloat(document.getElementById('editMealQty').value);
+  const newMealTime = document.getElementById('editMealTime').value;
+
+  console.log('Submitting meal edit:', { date, entryId, newQty, newMealTime });
+
+  // Find the entry
+  const day = appState.dietLog[date];
+  if (!day) {
+    showToast('Date not found');
+    return;
+  }
+
+  const entryIndex = day.entries.findIndex(e => e.entryId === entryId);
+  if (entryIndex === -1) {
+    showToast('Entry not found');
+    return;
+  }
+
+  const entry = day.entries[entryIndex];
+  const oldQty = entry.quantity || entry.servings || 1;
+  const ratio = newQty / oldQty;
+
+  console.log('Quantity change:', { oldQty, newQty, ratio });
+
+  // Update entry with recalculated nutrition values
+  day.entries[entryIndex] = {
+    ...entry,
+    quantity: entry.quantity ? newQty : undefined,
+    servings: entry.servings ? newQty : undefined,
+    meal: newMealTime,
+    calories: Math.round(entry.calories * ratio),
+    protein: Math.round(entry.protein * ratio * 10) / 10,
+    carbs: Math.round(entry.carbs * ratio * 10) / 10,
+    fat: Math.round(entry.fat * ratio * 10) / 10,
+    fiber: entry.fiber ? Math.round(entry.fiber * ratio * 10) / 10 : 0
+  };
+
+  // Recalculate day totals
+  recalculateDayTotals(date);
+
+  // Persist changes
+  persistState();
+
+  // Close modal
+  closeEditMealModal();
+
+  // Update UI
+  updateDietPanels();
+  updateHome();
+
+  showToast('Meal entry updated!');
+  console.log('Meal entry updated successfully');
+}
+
+/**
+ * Delete a meal or food entry
+ * @param {string} date - Date key (YYYY-MM-DD)
+ * @param {string} entryId - Unique ID of the entry to delete
+ */
+function deleteMealEntry(date, entryId) {
+  const dayData = appState.dietLog[date];
+  if (!dayData) {
+    alert('Date not found');
+    return;
+  }
+
+  const entry = dayData.entries.find(e => e.entryId === entryId);
+  if (!entry) {
+    alert('Entry not found');
+    return;
+  }
+
+  // Confirmation
+  const message = `Delete this meal entry?\n\n${entry.name}\n${entry.calories} calories\n\nThis cannot be undone.`;
+
+  if (!confirm(message)) {
+    return;
+  }
+
+  // Remove entry
+  const index = dayData.entries.findIndex(e => e.entryId === entryId);
+  if (index !== -1) {
+    dayData.entries.splice(index, 1);
+
+    // Recalculate totals
+    recalculateDayTotals(date);
+
+    // If no entries left, delete the day
+    if (dayData.entries.length === 0) {
+      delete appState.dietLog[date];
+    }
+
+    // Save
+    persistState();
+
+    // Refresh
+    location.reload();
+
+    alert('Meal entry deleted successfully!');
+  }
+}
+
 /* ---------- Window bindings ---------- */
 window.navigateTo = navigateTo;
 window.switchSubtab = switchSubtab;
@@ -2943,3 +3331,13 @@ window.closeScopeModal = closeScopeModal;
 window.openWorkoutCompleteModal = openWorkoutCompleteModal;
 window.closeWorkoutCompleteModal = closeWorkoutCompleteModal;
 window.handleAddMoreFromComplete = handleAddMoreFromComplete;
+
+// Edit/Delete workout sets
+window.editWorkoutSet = editWorkoutSet;
+window.closeEditSetModal = closeEditSetModal;
+window.deleteWorkoutSet = deleteWorkoutSet;
+
+// Edit/Delete meal/food entries
+window.editMealEntry = editMealEntry;
+window.closeEditMealModal = closeEditMealModal;
+window.deleteMealEntry = deleteMealEntry;

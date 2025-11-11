@@ -263,14 +263,52 @@ This document is based on **static code analysis only**. Features marked as "Wor
 - `updateWeightChart()` - Render Chart.js line chart
 
 **Issues:**
-- ⚠️ Cannot edit logged entries
-- ⚠️ Cannot delete logged entries
 - ⚠️ No weekly/monthly calorie averages beyond 7 days
 - ⚠️ Weight chart limited to 14 points
 
 ---
 
-### 1.9 Settings & Configuration
+### 1.9 Edit/Delete Logged Entries
+
+**Status:** ✅ Implemented (Phase 3.1)
+**Priority:** Medium
+**Files:** `js/app.js:2891-3251`, `index.html:668-751`
+
+| Feature | Functions | Status | Notes |
+|---------|-----------|--------|-------|
+| Edit Workout Sets | `editWorkoutSet()` | ✅ Working | Modify weight/reps/RIR |
+| Delete Workout Sets | `deleteWorkoutSet()` | ✅ Working | With confirmation |
+| Edit Meal Entries | `editMealEntry()` | ✅ Working | Quantity + meal time |
+| Delete Meal Entries | `deleteMealEntry()` | ✅ Working | With auto-cleanup |
+| Recalculate Totals | `recalculateDayTotals()` | ✅ Working | Auto-update macros |
+
+**Key Functions:**
+- `editWorkoutSet()` - Open modal with set data
+- `handleEditSetSubmit()` - Save workout changes
+- `deleteWorkoutSet()` - Remove set from setsLog
+- `editMealEntry()` - Open modal with meal data
+- `handleEditMealSubmit()` - Save meal with quantity ratio calculation
+- `deleteMealEntry()` - Remove entry, recalc totals, cleanup empty days
+- `recalculateDayTotals()` - Sum all entries for accurate day totals
+
+**Features:**
+- Unique IDs for all new entries (format: `set_timestamp_random` or `entry_timestamp_random`)
+- Edit/delete buttons only show for entries with IDs (backward compatible)
+- Confirmation dialogs for all deletions
+- Quantity-based nutrition recalculation for meal edits
+- Automatic day total recalculation after changes
+- Empty days automatically removed from dietLog
+- Toast/alert notifications for user feedback
+- Console logging for debugging
+
+**Issues:**
+- ⚠️ Old entries without IDs cannot be edited/deleted
+- ⚠️ Page reload after meal deletion (could be optimized)
+- ⚠️ No bulk operations (delete multiple at once)
+
+---
+
+### 1.10 Settings & Configuration
 
 **Status:** ✅ Implemented
 **Priority:** Medium
@@ -298,7 +336,7 @@ This document is based on **static code analysis only**. Features marked as "Wor
 
 ---
 
-### 1.10 PWA Features
+### 1.11 PWA Features
 
 **Status:** ✅ Implemented
 **Priority:** High
@@ -496,25 +534,6 @@ function exportData() {
 
 ---
 
-### 3.5 Edit/Delete Logged Entries
-
-**Status:** ❌ Not Implemented
-**Priority:** Medium
-
-**Diet Logging:**
-- ❌ Cannot edit logged food
-- ❌ Cannot delete logged food
-- ❌ Cannot edit logged meals
-
-**Exercise Logging:**
-- ❌ Cannot edit completed sets
-- ❌ Cannot delete individual sets
-- ❌ Cannot edit workout history
-
-**Workaround:** None (must log correctly the first time)
-
----
-
 ## 4. MISSING TESTS (100% Untested)
 
 ### 4.1 Test Infrastructure
@@ -605,17 +624,17 @@ function exportData() {
 ## 5. SUMMARY STATISTICS
 
 ### Feature Completion
-- **Working Features:** 10 major feature sets (46 sub-features)
+- **Working Features:** 11 major feature sets (51 sub-features)
 - **Broken Features:** 2 (dependency + error handling)
-- **Incomplete Features:** 5 major gaps
+- **Incomplete Features:** 4 major gaps
 - **Test Coverage:** 0%
 
 ### Priority Breakdown
 | Priority | Count | Features |
 |----------|-------|----------|
 | 🔴 Critical | 3 | PIN security, storage errors, data export |
-| 🟡 High | 6 | Chart.js, custom exercises, edit entries, tests |
-| 🟢 Medium | 8 | Exercise history, meal editing, settings |
+| 🟡 High | 5 | Chart.js, custom exercises, tests |
+| 🟢 Medium | 7 | Exercise history, settings |
 | ⚪ Low | 2 | UI polish, notifications |
 
 ### Lines of Code by Component
@@ -642,9 +661,8 @@ function exportData() {
 
 ### Long-Term (Backlog)
 7. 🟢 **Per-exercise progression** - History view
-8. 🟢 **Edit/delete entries** - CRUD operations
-9. 🟢 **Meal editing** - Modify saved meals
-10. 🟢 **Comprehensive test suite** - 80%+ coverage
+8. 🟢 **Saved meal editing** - Modify saved meal templates
+9. 🟢 **Comprehensive test suite** - 80%+ coverage
 
 ---
 
