@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuration System Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+    .test-section { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; }
+    .pass { color: green; }
+    .fail { color: red; }
+    .info { color: blue; }
+    h2 { margin-top: 0; }
+    pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Configuration System Test</h1>
+
+  <div class="test-section">
+    <h2>Environment Detection</h2>
+    <div id="env-test"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Feature Flags</h2>
+    <div id="feature-test"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Configuration Values</h2>
+    <div id="config-test"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Full Configuration</h2>
+    <pre id="full-config"></pre>
+  </div>
+
+  <!-- Load configuration system -->
+  <script src="../../js/config/default.js"></script>
+  <script src="../../js/config/development.js"></script>
+  <script src="../../js/config/production.js"></script>
+  <script src="../../js/config/index.js"></script>
+
+  <script>
+    // Test 1: Environment Detection
+    const envTest = document.getElementById('env-test');
+    const env = getEnvironment();
+    envTest.innerHTML = `
+      <p class="${env === 'development' ? 'pass' : 'info'}">
+        <strong>Current Environment:</strong> ${env}
+      </p>
+      <p class="info">
+        Expected: 'development' (localhost) or 'production' (other domains)
+      </p>
+      <p><small>Hostname: ${window.location.hostname}</small></p>
+    `;
+
+    // Test 2: Feature Flags
+    const featureTest = document.getElementById('feature-test');
+    const features = [
+      'enableDataExport',
+      'enableDataImport',
+      'enableCustomExercises',
+      'enableEditEntries',
+      'enableDeleteEntries',
+      'enablePerExerciseHistory'
+    ];
+
+    let featureHtml = '<table style="width:100%"><tr><th>Feature</th><th>Enabled</th><th>Expected</th></tr>';
+    features.forEach(feature => {
+      const enabled = isFeatureEnabled(feature);
+      const expected = env === 'development' ? (feature === 'enableDataExport') : (feature === 'enableDataExport');
+      const match = (enabled === expected) || (env === 'development' && enabled) || (env === 'production' && !enabled && feature !== 'enableDataExport');
+      const className = match ? 'pass' : 'fail';
+      featureHtml += `<tr class="${className}">
+        <td>${feature}</td>
+        <td>${enabled ? '✅' : '❌'}</td>
+        <td>${env === 'development' ? 'true (dev)' : (feature === 'enableDataExport' ? 'true' : 'false (prod)')}</td>
+      </tr>`;
+    });
+    featureHtml += '</table>';
+    featureTest.innerHTML = featureHtml;
+
+    // Test 3: Configuration Values
+    const configTest = document.getElementById('config-test');
+    const tests = [
+      { path: 'security.pinHashIterations', expected: 100000 },
+      { path: 'security.sessionTimeout', expected: env === 'development' ? 60 : (env === 'production' ? 15 : 30) },
+      { path: 'ui.theme', expected: 'light' },
+      { path: 'ui.weightUnit', expected: 'lbs' },
+      { path: 'charts.colors.primary', expected: '#007bff' },
+      { path: 'logging.level', expected: env === 'development' ? 'debug' : (env === 'production' ? 'error' : 'info') },
+      { path: 'app.name', expected: 'Fitness Tracker' },
+      { path: 'app.version', expected: '1.1.0' }
+    ];
+
+    let configHtml = '<table style="width:100%"><tr><th>Config Path</th><th>Value</th><th>Expected</th><th>Match</th></tr>';
+    tests.forEach(test => {
+      const value = getConfigValue(test.path);
+      const match = value === test.expected;
+      const className = match ? 'pass' : 'fail';
+      configHtml += `<tr class="${className}">
+        <td><code>${test.path}</code></td>
+        <td><strong>${value}</strong></td>
+        <td>${test.expected}</td>
+        <td>${match ? '✅' : '❌'}</td>
+      </tr>`;
+    });
+    configHtml += '</table>';
+    configTest.innerHTML = configHtml;
+
+    // Test 4: Full Configuration
+    const fullConfig = document.getElementById('full-config');
+    fullConfig.textContent = JSON.stringify(getConfig(), null, 2);
+
+    // Console summary
+    console.log('=== Configuration Test Summary ===');
+    console.log('Environment:', env);
+    console.log('Feature flags:', features.map(f => `${f}: ${isFeatureEnabled(f)}`).join(', '));
+    console.log('Config loaded successfully:', typeof config !== 'undefined');
+    console.log('All utility functions available:',
+      typeof isFeatureEnabled !== 'undefined' &&
+      typeof getConfigValue !== 'undefined' &&
+      typeof getEnvironment !== 'undefined' &&
+      typeof getConfig !== 'undefined'
+    );
+  </script>
+</body>
+</html>
