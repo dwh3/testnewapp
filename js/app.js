@@ -455,6 +455,10 @@ function setupEventListeners() {
   const editSetForm = document.getElementById('editSetForm');
   if (editSetForm) editSetForm.addEventListener('submit', handleEditSetSubmit);
 
+  // Edit meal entry form
+  const editMealForm = document.getElementById('editMealForm');
+  if (editMealForm) editMealForm.addEventListener('submit', handleEditMealSubmit);
+
   // Save meal buttons
   const saveMealBtn = document.getElementById('saveMealBtn');
   if (saveMealBtn) saveMealBtn.addEventListener('click', saveMealOnly);
@@ -3068,7 +3072,134 @@ function editMealEntry(date, entryId) {
   }
 
   console.log('Found entry to edit:', entry);
-  alert(`Meal/food edit functionality coming in step 6.\n\nType: ${entry.type}\nName: ${entry.name}\nCalories: ${entry.calories}\nDate: ${date}\nID: ${entryId}`);
+
+  // Populate form fields
+  document.getElementById('editMealDate').value = date;
+  document.getElementById('editMealEntryId').value = entryId;
+  document.getElementById('editMealName').value = entry.name || '';
+  document.getElementById('editMealQty').value = entry.quantity || entry.servings || 1;
+  document.getElementById('editMealUnit').value = entry.unit || 'serving(s)';
+  document.getElementById('editMealTime').value = entry.meal || '';
+
+  // Show modal
+  const modal = document.getElementById('editMealModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+  }
+}
+
+/**
+ * Close the meal edit modal
+ */
+function closeEditMealModal() {
+  const modal = document.getElementById('editMealModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+  }
+
+  // Reset form
+  const form = document.getElementById('editMealForm');
+  if (form) form.reset();
+}
+
+/**
+ * Recalculate totals for a specific day based on all entries
+ * @param {string} date - Date key (YYYY-MM-DD)
+ */
+function recalculateDayTotals(date) {
+  const day = appState.dietLog[date];
+  if (!day) return;
+
+  // Reset totals
+  day.totals = {
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    fiber: 0
+  };
+
+  // Sum all entries
+  day.entries.forEach(entry => {
+    day.totals.calories += entry.calories || 0;
+    day.totals.protein += entry.protein || 0;
+    day.totals.carbs += entry.carbs || 0;
+    day.totals.fat += entry.fat || 0;
+    day.totals.fiber += entry.fiber || 0;
+  });
+
+  // Round to one decimal place
+  day.totals.protein = Math.round(day.totals.protein * 10) / 10;
+  day.totals.carbs = Math.round(day.totals.carbs * 10) / 10;
+  day.totals.fat = Math.round(day.totals.fat * 10) / 10;
+  day.totals.fiber = Math.round(day.totals.fiber * 10) / 10;
+
+  console.log('Recalculated day totals for', date, ':', day.totals);
+}
+
+/**
+ * Handle meal edit form submission
+ * @param {Event} e - Form submit event
+ */
+function handleEditMealSubmit(e) {
+  e.preventDefault();
+
+  const date = document.getElementById('editMealDate').value;
+  const entryId = document.getElementById('editMealEntryId').value;
+  const newQty = parseFloat(document.getElementById('editMealQty').value);
+  const newMealTime = document.getElementById('editMealTime').value;
+
+  console.log('Submitting meal edit:', { date, entryId, newQty, newMealTime });
+
+  // Find the entry
+  const day = appState.dietLog[date];
+  if (!day) {
+    showToast('Date not found');
+    return;
+  }
+
+  const entryIndex = day.entries.findIndex(e => e.entryId === entryId);
+  if (entryIndex === -1) {
+    showToast('Entry not found');
+    return;
+  }
+
+  const entry = day.entries[entryIndex];
+  const oldQty = entry.quantity || entry.servings || 1;
+  const ratio = newQty / oldQty;
+
+  console.log('Quantity change:', { oldQty, newQty, ratio });
+
+  // Update entry with recalculated nutrition values
+  day.entries[entryIndex] = {
+    ...entry,
+    quantity: entry.quantity ? newQty : undefined,
+    servings: entry.servings ? newQty : undefined,
+    meal: newMealTime,
+    calories: Math.round(entry.calories * ratio),
+    protein: Math.round(entry.protein * ratio * 10) / 10,
+    carbs: Math.round(entry.carbs * ratio * 10) / 10,
+    fat: Math.round(entry.fat * ratio * 10) / 10,
+    fiber: entry.fiber ? Math.round(entry.fiber * ratio * 10) / 10 : 0
+  };
+
+  // Recalculate day totals
+  recalculateDayTotals(date);
+
+  // Persist changes
+  persistState();
+
+  // Close modal
+  closeEditMealModal();
+
+  // Update UI
+  updateDietPanels();
+  updateHome();
+
+  showToast('Meal entry updated!');
+  console.log('Meal entry updated successfully');
 }
 
 /**
@@ -3185,4 +3316,5 @@ window.deleteWorkoutSet = deleteWorkoutSet;
 
 // Edit/Delete meal/food entries
 window.editMealEntry = editMealEntry;
+window.closeEditMealModal = closeEditMealModal;
 window.deleteMealEntry = deleteMealEntry;
