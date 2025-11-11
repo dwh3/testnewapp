@@ -2694,6 +2694,16 @@ function updateDietPanels() {
                 <div class="activity-name">${it.name} • ${it.calories} kcal</div>
                 <div class="activity-time">${it.meal || '—'} • ${it.servings} serving${it.servings>1?'s':''} • ${it.protein||0}g P • ${it.carbs||0}g C • ${it.fat||0}g F</div>
               </div>
+              ${it.entryId ? `
+              <div class="activity-actions">
+                <button onclick="editMealEntry('${t}', '${it.entryId}')" class="btn-icon-sm" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button onclick="deleteMealEntry('${t}', '${it.entryId}')" class="btn-icon-sm btn-danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+              ` : ''}
             </div>`;
         }
         // food
@@ -2704,6 +2714,16 @@ function updateDietPanels() {
               <div class="activity-name">${it.name || `Entry ${idx+1}`} • ${it.calories} kcal</div>
               <div class="activity-time">${it.meal || '—'} • ${(it.protein || 0)}g P • ${(it.carbs || 0)}g C • ${(it.fat || 0)}g F</div>
             </div>
+            ${it.entryId ? `
+            <div class="activity-actions">
+              <button onclick="editMealEntry('${t}', '${it.entryId}')" class="btn-icon-sm" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button onclick="deleteMealEntry('${t}', '${it.entryId}')" class="btn-icon-sm btn-danger" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+            ` : ''}
           </div>`;
       }).join('');
     }
@@ -3025,6 +3045,57 @@ function deleteWorkoutSet(setId) {
   }
 }
 
+/* ---------- Edit/Delete Meal/Food Entries ---------- */
+/**
+ * Edit a meal or food entry
+ * @param {string} date - Date key (YYYY-MM-DD)
+ * @param {string} entryId - Unique ID of the entry to edit
+ */
+function editMealEntry(date, entryId) {
+  console.log('Edit meal entry:', date, entryId);
+
+  // Find the entry
+  const day = appState.dietLog[date];
+  if (!day) {
+    showToast('Date not found');
+    return;
+  }
+
+  const entry = day.entries.find(e => e.entryId === entryId);
+  if (!entry) {
+    showToast('Entry not found');
+    return;
+  }
+
+  console.log('Found entry to edit:', entry);
+  alert(`Meal/food edit functionality coming in step 6.\n\nType: ${entry.type}\nName: ${entry.name}\nCalories: ${entry.calories}\nDate: ${date}\nID: ${entryId}`);
+}
+
+/**
+ * Delete a meal or food entry
+ * @param {string} date - Date key (YYYY-MM-DD)
+ * @param {string} entryId - Unique ID of the entry to delete
+ */
+function deleteMealEntry(date, entryId) {
+  console.log('Delete meal entry:', date, entryId);
+
+  // Find the entry
+  const day = appState.dietLog[date];
+  if (!day) {
+    showToast('Date not found');
+    return;
+  }
+
+  const entry = day.entries.find(e => e.entryId === entryId);
+  if (!entry) {
+    showToast('Entry not found');
+    return;
+  }
+
+  console.log('Found entry to delete:', entry);
+  alert(`Meal/food delete functionality coming in step 7.\n\nType: ${entry.type}\nName: ${entry.name}\nCalories: ${entry.calories}\nDate: ${date}\nID: ${entryId}`);
+}
+
 /* ---------- Window bindings ---------- */
 window.navigateTo = navigateTo;
 window.switchSubtab = switchSubtab;
@@ -3111,3 +3182,7 @@ window.handleAddMoreFromComplete = handleAddMoreFromComplete;
 window.editWorkoutSet = editWorkoutSet;
 window.closeEditSetModal = closeEditSetModal;
 window.deleteWorkoutSet = deleteWorkoutSet;
+
+// Edit/Delete meal/food entries
+window.editMealEntry = editMealEntry;
+window.deleteMealEntry = deleteMealEntry;
