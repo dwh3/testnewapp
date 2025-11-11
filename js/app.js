@@ -1446,7 +1446,8 @@ function finishActiveWorkout() {
   // Log all sets to setsLog
   aw.items.forEach(it => {
     it.setsCompleted.forEach(st => {
-      appState.setsLog.push({
+      const newSet = {
+        id: 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), // Unique ID for edit/delete
         date: st.ts || new Date().toISOString(),
         exerciseId: it.exerciseId,
         exerciseName: it.name,
@@ -1454,7 +1455,9 @@ function finishActiveWorkout() {
         weight: st.weight,
         reps: st.reps,
         rir: st.rir
-      });
+      };
+      appState.setsLog.push(newSet);
+      console.log('Created workout set with ID:', newSet.id);
     });
   });
 
@@ -2073,9 +2076,10 @@ function addSelectedFoodToLog(calc) {
   ensureDietDay(date);
 
   const entry = {
+    entryId: 'entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), // Unique ID for edit/delete
     type: 'food',
     source: 'food_db',
-    id: selectedFood.id,
+    foodId: selectedFood.id, // Renamed from 'id' to avoid confusion with entryId
     name: selectedFood.name,
     meal,
     qty: calc.qty,
@@ -2090,6 +2094,7 @@ function addSelectedFoodToLog(calc) {
 
   appState.dietLog[date].entries.push(entry);
   addTotals(appState.dietLog[date].totals, entry);
+  console.log('Created food entry with ID:', entry.entryId);
 
   persistState();
   updateHome();
@@ -2388,7 +2393,8 @@ function quickAddFood(foodId, withPortion = false) {
   const servings = food.refGrams > 0 ? grams / food.refGrams : 0;
 
   const entry = {
-    type:'food', source:'food_db', id:food.id, name:food.name, meal,
+    entryId: 'entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), // Unique ID for edit/delete
+    type:'food', source:'food_db', foodId:food.id, name:food.name, meal,
     qty, unit: unitKey, grams,
     calories: Math.round((food.perRef.calories || 0) * servings),
     protein: Math.round((food.perRef.protein || 0) * servings),
@@ -2400,6 +2406,7 @@ function quickAddFood(foodId, withPortion = false) {
   ensureDietDay(date);
   appState.dietLog[date].entries.push(entry);
   addTotals(appState.dietLog[date].totals, entry);
+  console.log('Created quick-add food entry with ID:', entry.entryId);
   persistState();
   updateHome();
   updateDietPanels();
@@ -2421,6 +2428,7 @@ function quickAddMeal(mealId, withServings = false) {
   const totals = scaleTotals(meal.perServingTotals, servings);
 
   const entry = {
+    entryId: 'entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), // Unique ID for edit/delete
     type:'meal', mealId: meal.id, name: meal.name, meal: mealTag, servings,
     calories: totals.calories, protein: totals.protein, carbs: totals.carbs, fat: totals.fat,
     components: meal.items.map(it => {
@@ -2442,6 +2450,7 @@ function quickAddMeal(mealId, withServings = false) {
   ensureDietDay(date);
   appState.dietLog[date].entries.push(entry);
   addTotals(appState.dietLog[date].totals, entry);
+  console.log('Created quick-add meal entry with ID:', entry.entryId);
   persistState();
   updateHome();
   updateDietPanels();
@@ -2616,6 +2625,7 @@ function saveMeal(addAfter) {
     const mealTag = document.getElementById('mealBuilderMeal')?.value || 'Snack';
     const totals = scaleTotals(meal.perServingTotals, 1);
     const entry = {
+      entryId: 'entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), // Unique ID for edit/delete
       type:'meal', mealId: meal.id, name: meal.name, meal: mealTag, servings: 1,
       calories: totals.calories, protein: totals.protein, carbs: totals.carbs, fat: totals.fat,
       components: meal.items.map(it => {
@@ -2633,6 +2643,7 @@ function saveMeal(addAfter) {
     ensureDietDay(date);
     appState.dietLog[date].entries.push(entry);
     addTotals(appState.dietLog[date].totals, entry);
+    console.log('Created meal builder entry with ID:', entry.entryId);
     persistState();
     updateHome();
     updateDietPanels();
