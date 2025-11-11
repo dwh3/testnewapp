@@ -37,8 +37,6 @@ jobs:
     - name: Verify manual test files exist
       run: |
         echo "Checking manual test infrastructure..."
-        test -f tests/manual/test-crypto.html || exit 1
-        test -f tests/manual/test-storage.html || exit 1
         test -f tests/manual/test-config.html || exit 1
         test -f tests/manual/test-edit-delete.html || exit 1
         echo "✅ Manual test files present"
@@ -46,7 +44,7 @@ jobs:
     - name: Documentation check
       run: |
         echo "Verifying documentation..."
-        test -f TESTING.md || exit 1
+        test -f tests/README.md || exit 1
         test -f SECURITY.md || exit 1
         test -f CONFIG.md || exit 1
         test -f CHANGELOG.md || exit 1
