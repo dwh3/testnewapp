@@ -2985,13 +2985,44 @@ function handleEditSetSubmit(e) {
  */
 function deleteWorkoutSet(setId) {
   console.log('Delete workout set:', setId);
+
+  // Find the set to show details in confirmation
   const set = appState.setsLog.find(s => s.id === setId);
+
   if (!set) {
     showToast('Set not found');
     return;
   }
+
   console.log('Found set to delete:', set);
-  alert(`Delete functionality coming in step 4.\n\nSet: ${set.exerciseName}\nWeight: ${set.weight} lbs × ${set.reps} reps\nID: ${setId}`);
+
+  // Confirmation dialog with details
+  const message = `Delete this workout set?\n\n${set.exerciseName}\n${set.weight} lbs × ${set.reps} reps${set.rir !== null && set.rir !== undefined ? `\nRIR: ${set.rir}` : ''}\n${formatDate(set.date)}\n\nThis cannot be undone.`;
+
+  if (!confirm(message)) {
+    console.log('Delete cancelled by user');
+    return; // User cancelled
+  }
+
+  // Remove from array
+  const index = appState.setsLog.findIndex(s => s.id === setId);
+  if (index !== -1) {
+    const deletedSet = appState.setsLog.splice(index, 1)[0];
+    console.log('Deleted set:', deletedSet);
+
+    // Save to localStorage
+    persistState();
+
+    // Refresh display
+    updateHome();
+    updateExerciseProgress();
+    updateSetsChart();
+
+    // Success message
+    showToast('Workout set deleted!');
+  } else {
+    showToast('Error: Set not found');
+  }
 }
 
 /* ---------- Window bindings ---------- */
