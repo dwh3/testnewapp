@@ -1,8 +1,24 @@
 # FitTrack Testing Guide
 
+## CI/CD
+
+GitHub Actions runs **build validation** on every push:
+- ✅ Validates critical files exist (HTML, JS, config, docs)
+- ✅ Checks JavaScript syntax for all .js files
+- ✅ Verifies manual test infrastructure is present
+- ✅ Confirms documentation files are complete
+
+**Note**: This project uses a combination of:
+- **Automated unit tests** (Jest) for crypto and storage modules
+- **Manual testing** (browser-based) for UI and Phase 3.1 features
+
+See workflow: `.github/workflows/tests.yml`
+
 ## Overview
 
 This testing infrastructure validates the security fixes and error handling implemented in Phase 2.1 (PIN security) and Phase 2.2 (localStorage error handling).
+
+**Phase 3.1 features** (edit/delete functionality) use manual testing. See manual test files in `tests/manual/` directory.
 
 ## Running Tests
 
@@ -31,16 +47,29 @@ npm run test:verbose
 ```
 tests/
 ├── setup.js                    # Test environment configuration
-├── unit/                       # Unit tests for individual modules
+├── unit/                       # Unit tests for individual modules (Jest)
 │   ├── crypto.test.js          # PIN hashing tests (37 tests)
 │   └── storage.test.js         # Storage wrapper tests (66 tests)
 ├── integration/                # Integration tests for user flows
 │   └── (future tests)
+├── manual/                     # Manual browser-based tests
+│   ├── test-crypto.html        # Crypto utilities manual test
+│   ├── test-storage.html       # Storage wrapper manual test
+│   ├── test-config.html        # Configuration system test
+│   └── test-edit-delete.html   # Phase 3.1 edit/delete functionality (53 tests)
 └── fixtures/                   # Reusable test data
     ├── users.js                # User profile fixtures
     ├── workouts.js             # Workout data fixtures
     └── profiles.js             # Complete profile fixtures
 ```
+
+### Manual Testing
+
+Phase 3.1 features (edit/delete) are tested manually:
+- Open `tests/manual/test-edit-delete.html` in a browser
+- Follow the 53-item checklist
+- Progress is saved to localStorage
+- Tests validate: edit/delete UI, data persistence, nutrition recalculation
 
 ## Test Coverage
 
