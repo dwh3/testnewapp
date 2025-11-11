@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit/Delete Manual Tests - Phase 3.1</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 3px solid #007bff;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #555;
+      margin-top: 30px;
+      padding: 10px;
+      background: white;
+      border-left: 4px solid #007bff;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 12px;
+      margin: 8px 0;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border-left: 3px solid #ccc;
+    }
+    .checklist-item:hover {
+      background: #e9ecef;
+    }
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+    input[type="checkbox"]:checked + label {
+      text-decoration: line-through;
+      color: #28a745;
+    }
+    label {
+      cursor: pointer;
+      flex: 1;
+      line-height: 1.5;
+    }
+    .note {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    .note strong {
+      color: #856404;
+    }
+    .instructions {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      color: #0c5460;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background: #e9ecef;
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #007bff, #0056b3);
+      width: 0%;
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Edit/Delete Functionality - Manual Test Checklist</h1>
+
+  <div class="note">
+    <strong>Phase 3.1 Completion Testing</strong><br>
+    This checklist verifies all edit/delete functionality is working correctly.
+    Check each item as you test. Progress is saved in localStorage.
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressBar">0%</div>
+  </div>
+
+  <div class="instructions">
+    <strong>Before Testing:</strong><br>
+    1. Open the main app (index.html) in a separate tab<br>
+    2. Create a profile if you haven't already<br>
+    3. Log some workout sets and meal entries<br>
+    4. Return to this test page to verify functionality
+  </div>
+
+  <div class="test-section">
+    <h2>Workout Edit Tests</h2>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test1">
+      <label for="test1">Edit button appears on workout entries in Recent Activity (Home tab)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test2">
+      <label for="test2">Click edit button opens modal with pre-populated fields (exercise name, weight, reps, RIR)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test3">
+      <label for="test3">Exercise name field is readonly (cannot be changed)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test4">
+      <label for="test4">Change weight value and click "Save Changes" - modal closes</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test5">
+      <label for="test5">Edited workout set shows updated weight in Recent Activity</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test6">
+      <label for="test6">Reload page - edited workout set still shows updated values (persisted)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test7">
+      <label for="test7">Edit RIR (Reps in Reserve) value - changes save correctly</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test8">
+      <label for="test8">Cancel button closes modal without saving changes</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test9">
+      <label for="test9">Press Escape key - modal closes without saving</label>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Workout Delete Tests</h2>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test10">
+      <label for="test10">Delete button (trash icon) appears next to edit button on workout entries</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test11">
+      <label for="test11">Click delete button - confirmation dialog appears showing exercise details</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test12">
+      <label for="test12">Confirmation shows: exercise name, weight, reps, RIR, and date</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test13">
+      <label for="test13">Click Cancel in confirmation - entry is NOT deleted</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test14">
+      <label for="test14">Click OK in confirmation - entry is removed from Recent Activity</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test15">
+      <label for="test15">Success toast notification appears after deletion</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test16">
+      <label for="test16">Weekly sets chart updates correctly after deletion</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test17">
+      <label for="test17">Reload page - deleted entry does not reappear (persisted)</label>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Meal Edit Tests</h2>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test18">
+      <label for="test18">Edit button appears on meal entries in Diet panel (Today's log)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test19">
+      <label for="test19">Edit button appears on food entries in Diet panel</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test20">
+      <label for="test20">Click edit on meal entry - modal opens with pre-populated fields (name, quantity, unit, meal time)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test21">
+      <label for="test21">Name and unit fields are readonly (cannot be changed)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test22">
+      <label for="test22">Change quantity from 1.0 to 2.0 - field accepts decimal values</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test23">
+      <label for="test23">Change meal time dropdown (e.g., Breakfast to Lunch)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test24">
+      <label for="test24">Click "Save Changes" - modal closes</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test25">
+      <label for="test25">Meal entry shows updated quantity in Diet panel</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test26">
+      <label for="test26">Nutrition values (calories, protein, carbs, fat) are recalculated proportionally</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test27">
+      <label for="test27">Day totals (Today's summary) update correctly after edit</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test28">
+      <label for="test28">Success toast notification appears</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test29">
+      <label for="test29">Reload page - edited meal shows updated quantity and meal time (persisted)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test30">
+      <label for="test30">Reload page - day totals are still correct (persisted)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test31">
+      <label for="test31">Press Escape key while modal open - modal closes without saving</label>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Meal Delete Tests</h2>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test32">
+      <label for="test32">Delete button (trash icon) appears next to edit button on meal entries</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test33">
+      <label for="test33">Click delete button - confirmation dialog appears</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test34">
+      <label for="test34">Confirmation shows: food/meal name and calorie count</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test35">
+      <label for="test35">Confirmation warns: "This cannot be undone"</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test36">
+      <label for="test36">Click Cancel - entry is NOT deleted</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test37">
+      <label for="test37">Click OK - entry is removed from Diet panel</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test38">
+      <label for="test38">Day totals recalculate correctly after deletion</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test39">
+      <label for="test39">Success message appears after deletion</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test40">
+      <label for="test40">Delete all entries for a day - day is removed from 7-day history</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test41">
+      <label for="test41">Reload page - deleted entries do not reappear (persisted)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test42">
+      <label for="test42">Reload page - day with no entries is still removed (cleanup persisted)</label>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Edge Cases & Backward Compatibility</h2>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test43">
+      <label for="test43">Old workout entries (before Phase 3.1) do NOT show edit/delete buttons</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test44">
+      <label for="test44">Old meal entries (before Phase 3.1) do NOT show edit/delete buttons</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test45">
+      <label for="test45">New workout entries (after Phase 3.1) DO show edit/delete buttons</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test46">
+      <label for="test46">New meal entries (after Phase 3.1) DO show edit/delete buttons</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test47">
+      <label for="test47">Console logs show operation details when editing/deleting (check browser console)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test48">
+      <label for="test48">Try editing with invalid quantity (e.g., 0 or negative) - form validation prevents submission</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test49">
+      <label for="test49">Multiple rapid edits to same entry work correctly (no race conditions)</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test50">
+      <label for="test50">Edit then delete same entry - both operations work in sequence</label>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Configuration & Feature Flags</h2>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test51">
+      <label for="test51">Open browser console - check config shows enableEditEntries: true</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test52">
+      <label for="test52">Browser console shows enableDeleteEntries: true</label>
+    </div>
+
+    <div class="checklist-item">
+      <input type="checkbox" id="test53">
+      <label for="test53">Environment detection works (localhost = development, other = production)</label>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top: 30px;">
+    <strong>Testing Complete?</strong><br>
+    Once all items are checked, Phase 3.1 is verified as working correctly!<br>
+    Expected: 53/53 tests passing (100%)
+  </div>
+
+  <script>
+    // Save checkbox state to localStorage
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const progressBar = document.getElementById('progressBar');
+    const storageKey = 'editDeleteTestProgress';
+
+    // Load saved state
+    function loadProgress() {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const state = JSON.parse(saved);
+        Object.keys(state).forEach(id => {
+          const checkbox = document.getElementById(id);
+          if (checkbox) checkbox.checked = state[id];
+        });
+      }
+      updateProgress();
+    }
+
+    // Save current state
+    function saveProgress() {
+      const state = {};
+      checkboxes.forEach(cb => {
+        state[cb.id] = cb.checked;
+      });
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      updateProgress();
+    }
+
+    // Update progress bar
+    function updateProgress() {
+      const total = checkboxes.length;
+      const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+      const percent = Math.round((checked / total) * 100);
+      progressBar.style.width = percent + '%';
+      progressBar.textContent = `${checked}/${total} (${percent}%)`;
+    }
+
+    // Attach listeners
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', saveProgress);
+    });
+
+    // Load on page load
+    loadProgress();
+
+    // Clear progress button
+    const clearBtn = document.createElement('button');
+    clearBtn.textContent = 'Reset All Tests';
+    clearBtn.style.cssText = 'margin: 20px 0; padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;';
+    clearBtn.onclick = () => {
+      if (confirm('Reset all test progress?')) {
+        localStorage.removeItem(storageKey);
+        checkboxes.forEach(cb => cb.checked = false);
+        updateProgress();
+      }
+    };
+    document.body.appendChild(clearBtn);
+  </script>
+</body>
+</html>

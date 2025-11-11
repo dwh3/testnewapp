@@ -7,12 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-11-12
+
+### Added
+- **Phase 3.1: Edit/Delete Functionality**
+  - Edit workout sets (weight, reps, RIR)
+  - Delete workout sets with confirmation dialog
+  - Edit meal entries (quantity, meal time)
+  - Delete meal entries with confirmation dialog
+  - Unique IDs for all new entries (timestamp + random string)
+  - Automatic nutrition recalculation on quantity changes
+  - Day total recalculation helper function
+  - Empty day cleanup (removes days with no entries)
+  - Edit/delete buttons in UI (workout and meal displays)
+  - Two modal forms (workout edit, meal edit)
+  - Console logging for debugging operations
+  - Toast/alert notifications for user feedback
+
+### Changed
+- `enableEditEntries: true` in production config (Phase 3.1 complete)
+- `enableDeleteEntries: true` in production config (Phase 3.1 complete)
+- Renamed food entry 'id' field to 'foodId' to avoid confusion with entryId
+- Updated FUNCTIONALITY_STATUS.md with edit/delete documentation
+
+### Technical Details
+- Edit modals use established modal-overlay pattern
+- Quantity-based recalculation: nutrition values scaled by newQty/oldQty ratio
+- Backward compatible: buttons only show for entries with IDs
+- Meal edits preserve all entry metadata, only update specified fields
+- Delete operations use splice() for array removal
+
+## [1.1.0] - 2025-11-11
+
 ### Security
 - **[HIGH]** Pinned Chart.js to exact version 4.4.6 with SRI integrity hash
 - Added Subresource Integrity (SRI) protection for Chart.js CDN resource
 - Configured Dependabot for automated security monitoring
 
 ### Added
+- **Phase 2.5: Configuration Management System**
+  - Environment detection (development/production)
+  - Feature flag system with 8 flags
+  - Hierarchical configuration (default → environment overrides)
+  - Configuration utility functions (isFeatureEnabled, getConfigValue)
+  - Environment-specific configs (development.js, production.js)
+  - CONFIG.md documentation (685 lines)
+  - Manual test page (test-config.html)
 - Comprehensive DEPENDENCIES.md with dependency management policy
 - Dependabot configuration for automated dependency updates
 - Version pinning strategy for production and development dependencies
