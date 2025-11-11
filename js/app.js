@@ -574,6 +574,16 @@ function updateHome() {
             <div class="activity-name">${s.exerciseName} • ${s.weight} × ${s.reps}</div>
             <div class="activity-time">${formatDate(s.date)} • ${prettyGroup(s.muscleGroup)}</div>
           </div>
+          ${s.id ? `
+          <div class="activity-actions">
+            <button onclick="editWorkoutSet('${s.id}')" class="btn-icon-sm" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button onclick="deleteWorkoutSet('${s.id}')" class="btn-icon-sm btn-danger" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+          ` : ''}
         </div>`).join('');
     }
   }
@@ -2873,6 +2883,37 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+/* ---------- Edit/Delete Workout Sets ---------- */
+/**
+ * Edit a workout set entry
+ * @param {string} setId - Unique ID of the set to edit
+ */
+function editWorkoutSet(setId) {
+  console.log('Edit workout set:', setId);
+  const set = appState.setsLog.find(s => s.id === setId);
+  if (!set) {
+    showToast('Set not found');
+    return;
+  }
+  console.log('Found set to edit:', set);
+  alert(`Edit functionality coming in next step.\n\nSet: ${set.exerciseName}\nWeight: ${set.weight} lbs\nReps: ${set.reps}\nID: ${setId}`);
+}
+
+/**
+ * Delete a workout set entry
+ * @param {string} setId - Unique ID of the set to delete
+ */
+function deleteWorkoutSet(setId) {
+  console.log('Delete workout set:', setId);
+  const set = appState.setsLog.find(s => s.id === setId);
+  if (!set) {
+    showToast('Set not found');
+    return;
+  }
+  console.log('Found set to delete:', set);
+  alert(`Delete functionality coming in step 4.\n\nSet: ${set.exerciseName}\nWeight: ${set.weight} lbs × ${set.reps} reps\nID: ${setId}`);
+}
+
 /* ---------- Window bindings ---------- */
 window.navigateTo = navigateTo;
 window.switchSubtab = switchSubtab;
@@ -2954,3 +2995,7 @@ window.closeScopeModal = closeScopeModal;
 window.openWorkoutCompleteModal = openWorkoutCompleteModal;
 window.closeWorkoutCompleteModal = closeWorkoutCompleteModal;
 window.handleAddMoreFromComplete = handleAddMoreFromComplete;
+
+// Edit/Delete workout sets
+window.editWorkoutSet = editWorkoutSet;
+window.deleteWorkoutSet = deleteWorkoutSet;
